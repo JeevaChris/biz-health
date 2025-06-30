@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BizVitals 360 – Suggestions</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+    font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('60e10a2c705560103ee87db2d2ac264a.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+    }
+    .question-box {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 { color: #004f99; }
+    .summary {
+      text-align: left;
+      background: #e9f5ff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .category {
+      margin-top: 30px;
+      text-align: left;
+    }
+    ul { text-align: left; }
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      background-color: #00bcd4;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: #0199a6; }
+  </style>
+</head>
+<body>
+  <div class="question-box">
+    <h2>Suggestions & Summary</h2>
+    <div id="suggestionsContainer"></div>
+    <button onclick="downloadSummary()">Download Summary</button>
+  </div>
+
+  <script>
+    const suggestionsData = {
+      "Operational Efficiency": {
+        summary: "You have strong processes in place but could enhance supplier evaluation and employee training to boost efficiency.",
+        suggestions: [
+          "Document and follow SOPs to improve consistency.",
+          "Train employees regularly to stay updated.",
+          "Review procurement strategy and vendor alternatives."
+        ]
+      },
+      "Financial Growth": {
+        summary: "Your business is growing steadily. However, closely monitor cash flow forecasting and avoid over-reliance on credit.",
+        suggestions: [
+          "Maintain a buffer for slow months or emergencies.",
+          "Separate personal and business finances.",
+          "Review supplier contracts quarterly."
+        ]
+      },
+      "Market Position & Competitiveness": {
+        summary: "Your brand visibility is strong, but focus on customer retention strategies and regular feedback collection.",
+        suggestions: [
+          "Implement loyalty or referral programs.",
+          "Track customer satisfaction with regular surveys.",
+          "Evaluate brand consistency across platforms."
+        ]
+      },
+      "Compliance & Risk Management": {
+        summary: "Compliance is well-managed, but you may need to strengthen fraud prevention and employee awareness on compliance topics.",
+        suggestions: [
+          "Conduct regular compliance audits.",
+          "Train staff on compliance protocols.",
+          "Ensure all legal documents are updated."
+        ]
+      },
+      "Business Sustainablity & Growth": {
+        summary: "There is potential for growth, particularly in team scalability and adaptability. Keep investing in innovation and leadership development.",
+        suggestions: [
+          "Develop a 1–3 year roadmap.",
+          "Encourage innovation at all levels.",
+          "Create a succession plan for key roles."
+        ]
+      }
+    };
+
+    const container = document.getElementById("suggestionsContainer");
+
+    for (const category in suggestionsData) {
+      const section = document.createElement("div");
+      section.className = "category";
+
+      const title = document.createElement("h3");
+      title.textContent = category;
+      section.appendChild(title);
+
+      const summary = document.createElement("div");
+      summary.className = "summary";
+      summary.textContent = suggestionsData[category].summary;
+      section.appendChild(summary);
+
+      const list = document.createElement("ul");
+      suggestionsData[category].suggestions.forEach(suggestion => {
+        const item = document.createElement("li");
+        item.textContent = suggestion;
+        list.appendChild(item);
+      });
+      section.appendChild(list);
+
+      container.appendChild(section);
+    }
+
+    function downloadSummary() {
+      let content = "BizVitals 360 – Suggestions & Summary\n\n";
+      for (const cat in suggestionsData) {
+        content += `\n${cat}\nSummary: ${suggestionsData[cat].summary}\nSuggestions:`;
+        suggestionsData[cat].suggestions.forEach(s => {
+          content += `\n- ${s}`;
+        });
+        content += "\n";
+      }
+      const blob = new Blob([content], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'bizvitals_suggestions_summary.txt';
+      link.click();
+    }
+  </script>
+</body>
+</html>

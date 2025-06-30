@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BizVitals 360 – Results</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('e563cf6befa7d11ab575b96263c45f7e.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+    }
+    .results-box {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 900px;
+      margin: auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #004f99;
+      margin-bottom: 20px;
+    }
+    .category-score {
+      margin: 20px 0;
+      text-align: left;
+    }
+    .category-score h3 {
+      color: #007bff;
+      margin: 10px 0;
+    }
+    .summary {
+      font-size: 18px;
+      margin-top: 30px;
+      font-weight: bold;
+    }
+    .btn {
+      margin-top: 25px;
+      padding: 12px 24px;
+      background: #00bcd4;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .btn:hover {
+      background: #0199a6;
+    }
+  </style>
+</head>
+<body>
+  <div class="results-box">
+    <h1>Your BizVitals 360 Score</h1>
+    <div id="scoreBreakdown"></div>
+    <div class="summary" id="summaryText"></div>
+    <br/>
+    <button class="btn" onclick="window.location.href='suggestions.html'">View Suggestions</button>
+    <button class="btn" onclick="window.location.href='index.html'">Back to Home</button>
+  </div>
+
+  <script>
+    const categories = {
+      "Financial Growth": 30,
+      "Operational Efficiency": 13,
+      "Market Position & Competitiveness": 15,
+      "Compliance & Risk Management": 15,
+      "Business Sustainablity & Growth": 15
+    };
+
+    const answers = JSON.parse(localStorage.getItem("assessmentAnswers") || "{}");
+    let totalQuestions = 0;
+    let totalYes = 0;
+    let resultHTML = "";
+
+    for (let category in categories) {
+      const expected = categories[category];
+      const given = answers[category] || [];
+      const yesCount = given.filter(a => a === "Yes").length;
+      const percentage = Math.round((yesCount / expected) * 100);
+      totalQuestions += expected;
+      totalYes += yesCount;
+
+      resultHTML += `
+        <div class="category-score">
+          <h3>${category}</h3>
+          <p>${yesCount} out of ${expected} answered "Yes" (${percentage}%)</p>
+        </div>
+      `;
+    }
+
+    const finalScore = Math.round((totalYes / totalQuestions) * 100);
+    let status = "";
+
+    if (finalScore >= 80) {
+      status = "Excellent – Your business is in great health!";
+    } else if (finalScore >= 60) {
+      status = "Good – Some improvements are needed.";
+    } else if (finalScore >= 40) {
+      status = "Average – Consider addressing multiple issues.";
+    } else {
+      status = "Critical – Immediate action is required!";
+    }
+
+    document.getElementById("scoreBreakdown").innerHTML = resultHTML;
+    document.getElementById("summaryText").innerText = `Overall Score: ${finalScore}% – ${status}`;
+  </script>
+</body>
+</html>

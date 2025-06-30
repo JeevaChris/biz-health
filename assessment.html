@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BizVitals 360 – Assessment</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('51b4b1612ec32c492fb1364514fa9c5b.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+    }
+    .question-box {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 { color: #004f99; }
+    #questionText {
+      font-size: 20px;
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin: 10px 0;
+      text-align: left;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      background-color: #00bcd4;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: #0199a6; }
+    #subCategoryButtons button {
+      background: #007bff;
+      margin: 5px;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+    }
+    #subCategoryButtons button.active {
+      background-color: #0056b3;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="question-box">
+    <h2 id="categoryTitle"></h2>
+    <div id="subCategoryButtons"></div>
+    <p id="questionText"></p>
+    <form id="optionsForm">
+      <label><input type="radio" name="option" value="Yes"> Yes</label>
+      <label><input type="radio" name="option" value="No"> No</label>
+      <label><input type="radio" name="option" value="In Process"> In Process</label>
+      <label><input type="radio" name="option" value="Not Applicable"> Not Applicable</label>
+    </form>
+    <div class="controls">
+      <button onclick="goBack()">Back</button>
+      <div>
+        <button onclick="saveAndExit()">Save & Exit</button>
+        <button onclick="nextQuestion()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const subCategoryMap = {
+      "Operational Efficiency": ["Process", "Supply Chain", "Cost"],
+      "Financial Growth": ["Revenue & Sales", "Profitability & Margins", "Cash Flow & Liquidity", "Expense Management"],
+      "Market Position & Competitiveness": ["Customer Satisfaction & Retention", "Competitive Advantage", "Brand & Market Share"],
+      "Compliance & Risk Management": ["Regulatory Compliance", "Fraud Prevention & Internal Controls", "Legal & Contractual Risks"],
+      "Business Sustainablity & Growth": ["Scalability & Future Plans", "Innovation & Adaptability", "Employee & Leadership Strength"]
+    };
+
+    const selectedCategory = localStorage.getItem("startCategory");
+    const subCategories = subCategoryMap[selectedCategory] || [];
+
+    const subCategoryButtons = document.getElementById("subCategoryButtons");
+    subCategories.forEach(sub => {
+      const btn = document.createElement("button");
+      btn.textContent = sub;
+      btn.onclick = () => filterBySubcategory(sub);
+      subCategoryButtons.appendChild(btn);
+    });
+
+    const categories = {
+      "Operational Efficiency": [
+        "Are SOPs documented and followed?",
+        "Are KPIs met consistently?",
+        "Is time spent on high-value tasks?",
+        "Are employees regularly trained?",
+        "Do you use ERP/CRM/dashboards?",
+        "Are suppliers regularly evaluated?",
+        "Is inventory managed efficiently?",
+        "Are purchases tracked proactively?",
+        "Do you have alternate vendors?",
+        "Is procurement cost-effective?",
+        "Are expenses reviewed regularly?",
+        "Are fixed/variable costs tracked?",
+        "Have top 3 cost drivers been reduced?"
+      ],
+      "Financial Growth": [
+        "Are you getting more sales or customers than you did last year?",
+        "Are you less dependent on a single customer or product to keep your business running?",
+        "Have your profit margins improved or stayed stable in the past 12 months?",
+        "Could your business stay profitable if revenue dropped by 10%?",
+        "Do you track revenue trends by product, service, or region?",
+        "Is your pricing strategy aligned with customer value and market position?",
+        "Are you regularly reviewing financial reports to assess profit trends?",
+        "Can you handle your regular business expenses without borrowing or delays?",
+        "Do you have some money saved to manage slow months or emergencies?",
+        "Do you know how much money is coming in and going out every month?",
+        "Do you consistently generate more cash than you spend each month?",
+        "Can you access funds quickly in case of a cash crunch?",
+        "Do you forecast your cash flow at least monthly?",
+        "Have you separated personal and business finances completely?",
+        "Do you avoid frequent reliance on credit for regular expenses?",
+        "Are most of your costs helping your business grow or run better?",
+        "Could you reduce spending quickly if needed, without hurting your business?",
+        "Do you track your spending against a monthly or quarterly budget?",
+        "Do you routinely review and optimize supplier and vendor contracts?",
+        "Have you identified your top 3 cost drivers in the business?",
+        "Do you run a break-even analysis when planning large expenses?",
+        "Do you review expense reports or accounts monthly?",
+        "Do your customers usually pay you on time?",
+        "Can you pay your suppliers and bills on time without waiting for new income?",
+        "Could your business keep running for a few months if sales dropped suddenly?",
+        "Are most of your invoices paid within 30 days?",
+        "Do you keep enough inventory to meet demand without overstocking?",
+        "Do you review how quickly you convert inventory into sales?",
+        "Are your payable and receivable cycles optimized to avoid cash gaps?",
+        "Do you monitor short-term assets and liabilities monthly?"
+      ],
+      "Market Position & Competitiveness": [
+        "Do you regularly collect customer feedback (e.g., surveys, reviews)?",
+        "Do you track repeat customer rate or retention levels?",
+        "Are your customers likely to recommend your business to others?",
+        "Do you respond quickly and effectively to customer complaints?",
+        "Do you offer loyalty programs or value-added services to retain customers?",
+        "Do you know what makes your business better or different from your competitors?",
+        "Are your products or services harder to copy than others in the market?",
+        "Do you continuously improve based on competitor strategies?",
+        "Are your prices aligned with the value you provide to customers?",
+        "Do you innovate regularly to stay ahead of the competition?",
+        "Are people aware of your brand in your target market?",
+        "Are your brand values clearly communicated in your messaging?",
+        "Have you gained more customers or market share in the past year?",
+        "Is your visual identity (logo, website, packaging) modern and professional?",
+        "Do you track your online presence (website traffic, social media, reviews)?"
+      ],
+      "Compliance & Risk Management": [
+        "Do you comply with all applicable industry regulations?",
+        "Are internal audits conducted regularly?",
+        "Is your data protection and cybersecurity adequate?",
+        "Do you have updated contracts and legal documentation?",
+        "Do you maintain proper records and documentation?",
+        "Have you trained employees on compliance topics?",
+        "Do you have controls to prevent fraud?",
+        "Is there a whistleblower or reporting mechanism in place?",
+        "Do you review legal and regulatory changes affecting your business?",
+        "Is your insurance coverage reviewed and adequate?",
+        "Are there procedures in place for handling disputes or legal issues?",
+        "Do you track pending legal matters and compliance obligations?",
+        "Are vendor and partner contracts reviewed regularly?",
+        "Is compliance a part of leadership reviews and strategy?",
+        "Do you maintain licenses and certifications up to date?"
+      ],
+      "Business Sustainablity & Growth": [
+        "Do you have a clear plan for how the business can grow in the next 1–3 years?",
+        "Can your current systems (team, tech, process) handle double the workload?",
+        "Are you exploring new markets, customer segments, or product lines?",
+        "Do you track and analyze business performance regularly?",
+        "Are funds or resources allocated for growth and expansion?",
+        "Have you introduced a new product, service, or process in the last 12 months?",
+        "Are you staying updated with market or technology trends in your industry?",
+        "Do you adapt quickly to changes in customer needs or market shifts?",
+        "Do you encourage team members to suggest improvements or innovations?",
+        "Are there systems in place to test and implement new ideas quickly?",
+        "Do you have the right people in key roles to grow your business?",
+        "Are your employees motivated and engaged in their roles?",
+        "Is there a leadership team or succession plan to support business continuity?",
+        "Do you invest in training or upskilling your staff?",
+        "Are roles and responsibilities clearly defined and communicated?"
+      ]
+    };
+
+    const fullQuestionSet = categories[selectedCategory];
+    let questionSet = [...fullQuestionSet];
+    let currentIndex = 0;
+
+    document.getElementById("categoryTitle").innerText = selectedCategory;
+
+    function filterBySubcategory(sub) {
+      const map = {
+        "Revenue & Sales": fullQuestionSet.slice(0, 7),
+        "Profitability & Margins": fullQuestionSet.slice(7, 14),
+        "Cash Flow & Liquidity": fullQuestionSet.slice(14, 22),
+        "Expense Management": fullQuestionSet.slice(22, 30),
+        "Process": fullQuestionSet.slice(0, 5),
+        "Supply Chain": fullQuestionSet.slice(5, 10),
+        "Cost": fullQuestionSet.slice(10, 13),
+        "Customer Satisfaction & Retention": fullQuestionSet.slice(0, 5),
+        "Competitive Advantage": fullQuestionSet.slice(5, 10),
+        "Brand & Market Share": fullQuestionSet.slice(10, 15),
+        "Regulatory Compliance": fullQuestionSet.slice(0, 5),
+        "Fraud Prevention & Internal Controls": fullQuestionSet.slice(5, 10),
+        "Legal & Contractual Risks": fullQuestionSet.slice(10, 15),
+        "Scalability & Future Plans": fullQuestionSet.slice(0, 5),
+        "Innovation & Adaptability": fullQuestionSet.slice(5, 10),
+        "Employee & Leadership Strength": fullQuestionSet.slice(10, 15),
+      };
+      questionSet = map[sub] || fullQuestionSet;
+      currentIndex = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      if (!questionSet[currentIndex]) {
+        window.location.href = "result.html";
+        return;
+      }
+      document.getElementById("questionText").innerText = `Q${currentIndex + 1}. ${questionSet[currentIndex]}`;
+      document.getElementById("optionsForm").reset();
+      const saved = JSON.parse(localStorage.getItem("assessmentAnswers") || "{}")[selectedCategory] || [];
+      if (saved[currentIndex]) {
+        document.querySelector(`input[value='${saved[currentIndex]}']`).checked = true;
+      }
+    }
+
+    function nextQuestion() {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (!selected) return alert("Please select an option.");
+
+      const answer = selected.value;
+      const allAnswers = JSON.parse(localStorage.getItem("assessmentAnswers") || "{}");
+      if (!allAnswers[selectedCategory]) allAnswers[selectedCategory] = [];
+      allAnswers[selectedCategory][currentIndex] = answer;
+      localStorage.setItem("assessmentAnswers", JSON.stringify(allAnswers));
+
+      currentIndex++;
+      showQuestion();
+    }
+
+    function goBack() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+      }
+    }
+
+    function saveAndExit() {
+      alert("Your answers have been saved.");
+      window.location.href = "index.html";
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>
