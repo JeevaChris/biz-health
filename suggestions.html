@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BizVitals 360 – Suggestions</title>
+  <title>BizVitals 360 – Assessment</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
       padding: 0;
-      background: url('60e10a2c705560103ee87db2d2ac264a.jpg') no-repeat center center fixed;
+      background: url('51b4b1612ec32c492fb1364514fa9c5b.jpg') no-repeat center center fixed;
       background-size: cover;
       color: #333;
     }
@@ -19,24 +18,21 @@
       padding: 30px;
       border-radius: 15px;
       max-width: 800px;
-      margin: 50px auto;
+      margin: 60px auto;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 { color: #004f99; }
-    .summary {
-      text-align: left;
-      background: #e9f5ff;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+    #questionText {
+      font-size: 20px;
+      margin: 20px 0;
     }
-    .category {
-      margin-top: 30px;
+    label {
+      display: block;
+      margin: 10px 0;
       text-align: left;
     }
-    ul { text-align: left; }
     button {
-      margin: 10px 10px 0 0;
+      margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
       border-radius: 8px;
@@ -46,141 +42,251 @@
       cursor: pointer;
     }
     button:hover { background-color: #0199a6; }
+    .home-btn {
+      background-color: #555;
+      margin-bottom: 10px;
+      color: white;
+    }
+    #subCategoryButtons {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #subCategoryButtons button {
+      background: #007bff;
+      margin: 5px;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #subCategoryButtons button:hover {
+      background-color: #005bb5;
+      transform: scale(1.08);
+    }
+    #subCategoryButtons button.active-subcat {
+      background-color: #28a745 !important;
+      transform: scale(1.12);
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
   <div class="question-box">
-    <h2>Suggestions & Summary</h2>
-    <div id="suggestionsContainer"></div>
-    <button onclick="downloadSummary()">Download Summary (.txt)</button>
-    <button onclick="downloadPDF()">Download PDF</button>
+    <h2 id="categoryTitle"></h2>
+    <div id="subCategoryButtons"></div>
+    <p id="questionText"></p>
+    <form id="optionsForm">
+      <label><input type="radio" name="option" value="Yes"> Yes</label>
+      <label><input type="radio" name="option" value="No"> No</label>
+      <label><input type="radio" name="option" value="In Process"> In Process</label>
+      <label><input type="radio" name="option" value="Not Applicable"> Not Applicable</label>
+    </form>
+    <div class="controls">
+      <button onclick="goBack()">Back</button>
+      <div>
+        <button onclick="saveAndExit()">Save & Exit</button>
+        <button onclick="nextQuestion()">Next</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const suggestionsData = {
-      "Operational Efficiency": {
-        summary: "You have strong processes in place but could enhance supplier evaluation and employee training to boost efficiency.",
-        suggestions: [
-          "Document and follow SOPs to improve consistency.",
-          "Train employees regularly to stay updated.",
-          "Review procurement strategy and vendor alternatives."
-        ]
-      },
-      "Financial Growth": {
-        summary: "Your business is growing steadily. However, closely monitor cash flow forecasting and avoid over-reliance on credit.",
-        suggestions: [
-          "Maintain a buffer for slow months or emergencies.",
-          "Separate personal and business finances.",
-          "Review supplier contracts quarterly."
-        ]
-      },
-      "Market Position & Competitiveness": {
-        summary: "Your brand visibility is strong, but focus on customer retention strategies and regular feedback collection.",
-        suggestions: [
-          "Implement loyalty or referral programs.",
-          "Track customer satisfaction with regular surveys.",
-          "Evaluate brand consistency across platforms."
-        ]
-      },
-      "Compliance & Risk Management": {
-        summary: "Compliance is well-managed, but you may need to strengthen fraud prevention and employee awareness on compliance topics.",
-        suggestions: [
-          "Conduct regular compliance audits.",
-          "Train staff on compliance protocols.",
-          "Ensure all legal documents are updated."
-        ]
-      },
-      "Business Sustainablity & Growth": {
-        summary: "There is potential for growth, particularly in team scalability and adaptability. Keep investing in innovation and leadership development.",
-        suggestions: [
-          "Develop a 1–3 year roadmap.",
-          "Encourage innovation at all levels.",
-          "Create a succession plan for key roles."
-        ]
-      }
+    const subCategoryMap = {
+      "Operational Efficiency": ["Process", "Supply Chain", "Cost"],
+      "Financial Growth": ["Revenue & Sales", "Profitability & Margins", "Cash Flow & Liquidity", "Expense Management"],
+      "Market Position & Competitiveness": ["Customer Satisfaction & Retention", "Competitive Advantage", "Brand & Market Share"],
+      "Compliance & Risk Management": ["Regulatory Compliance", "Fraud Prevention & Internal Controls", "Legal & Contractual Risks"],
+      "Business Sustainablity & Growth": ["Scalability & Future Plans", "Innovation & Adaptability", "Employee & Leadership Strength"]
     };
 
-    const container = document.getElementById("suggestionsContainer");
+    const selectedCategory = localStorage.getItem("startCategory");
+    const subCategories = subCategoryMap[selectedCategory] || [];
 
-    for (const category in suggestionsData) {
-      const section = document.createElement("div");
-      section.className = "category";
+    const subCategoryButtons = document.getElementById("subCategoryButtons");
+    subCategories.forEach(sub => {
+      const btn = document.createElement("button");
+      btn.textContent = sub;
+      btn.onclick = () => filterBySubcategory(sub);
+      subCategoryButtons.appendChild(btn);
+    });
 
-      const title = document.createElement("h3");
-      title.textContent = category;
-      section.appendChild(title);
+    const categories = {
+      "Operational Efficiency": [
+        "Are SOPs documented and followed?",
+        "Are KPIs met consistently?",
+        "Is time spent on high-value tasks?",
+        "Are employees regularly trained?",
+        "Do you use ERP/CRM/dashboards?",
+        "Are suppliers regularly evaluated?",
+        "Is inventory managed efficiently?",
+        "Are purchases tracked proactively?",
+        "Do you have alternate vendors?",
+        "Is procurement cost-effective?",
+        "Are expenses reviewed regularly?",
+        "Are fixed/variable costs tracked?",
+        "Have top 3 cost drivers been reduced?"
+      ],
+      "Financial Growth": [
+        "Are you getting more sales or customers than you did last year?",
+        "Are you less dependent on a single customer or product to keep your business running?",
+        "Have your profit margins improved or stayed stable in the past 12 months?",
+        "Could your business stay profitable if revenue dropped by 10%?",
+        "Do you track revenue trends by product, service, or region?",
+        "Is your pricing strategy aligned with customer value and market position?",
+        "Are you regularly reviewing financial reports to assess profit trends?",
+        "Can you handle your regular business expenses without borrowing or delays?",
+        "Do you have some money saved to manage slow months or emergencies?",
+        "Do you know how much money is coming in and going out every month?",
+        "Do you consistently generate more cash than you spend each month?",
+        "Can you access funds quickly in case of a cash crunch?",
+        "Do you forecast your cash flow at least monthly?",
+        "Have you separated personal and business finances completely?",
+        "Do you avoid frequent reliance on credit for regular expenses?",
+        "Are most of your costs helping your business grow or run better?",
+        "Could you reduce spending quickly if needed, without hurting your business?",
+        "Do you track your spending against a monthly or quarterly budget?",
+        "Do you routinely review and optimize supplier and vendor contracts?",
+        "Have you identified your top 3 cost drivers in the business?",
+        "Do you run a break-even analysis when planning large expenses?",
+        "Do you review expense reports or accounts monthly?",
+        "Do your customers usually pay you on time?",
+        "Can you pay your suppliers and bills on time without waiting for new income?",
+        "Could your business keep running for a few months if sales dropped suddenly?",
+        "Are most of your invoices paid within 30 days?",
+        "Do you keep enough inventory to meet demand without overstocking?",
+        "Do you review how quickly you convert inventory into sales?",
+        "Are your payable and receivable cycles optimized to avoid cash gaps?",
+        "Do you monitor short-term assets and liabilities monthly?"
+      ],
+      "Market Position & Competitiveness": [
+        "Do you regularly collect customer feedback (e.g., surveys, reviews)?",
+        "Do you track repeat customer rate or retention levels?",
+        "Are your customers likely to recommend your business to others?",
+        "Do you respond quickly and effectively to customer complaints?",
+        "Do you offer loyalty programs or value-added services to retain customers?",
+        "Do you know what makes your business better or different from your competitors?",
+        "Are your products or services harder to copy than others in the market?",
+        "Do you continuously improve based on competitor strategies?",
+        "Are your prices aligned with the value you provide to customers?",
+        "Do you innovate regularly to stay ahead of the competition?",
+        "Are people aware of your brand in your target market?",
+        "Are your brand values clearly communicated in your messaging?",
+        "Have you gained more customers or market share in the past year?",
+        "Is your visual identity (logo, website, packaging) modern and professional?",
+        "Do you track your online presence (website traffic, social media, reviews)?"
+      ],
+      "Compliance & Risk Management": [
+        "Do you comply with all applicable industry regulations?",
+        "Are internal audits conducted regularly?",
+        "Is your data protection and cybersecurity adequate?",
+        "Do you have updated contracts and legal documentation?",
+        "Do you maintain proper records and documentation?",
+        "Have you trained employees on compliance topics?",
+        "Do you have controls to prevent fraud?",
+        "Is there a whistleblower or reporting mechanism in place?",
+        "Do you review legal and regulatory changes affecting your business?",
+        "Is your insurance coverage reviewed and adequate?",
+        "Are there procedures in place for handling disputes or legal issues?",
+        "Do you track pending legal matters and compliance obligations?",
+        "Are vendor and partner contracts reviewed regularly?",
+        "Is compliance a part of leadership reviews and strategy?",
+        "Do you maintain licenses and certifications up to date?"
+      ],
+      "Business Sustainablity & Growth": [
+        "Do you have a clear plan for how the business can grow in the next 1–3 years?",
+        "Can your current systems (team, tech, process) handle double the workload?",
+        "Are you exploring new markets, customer segments, or product lines?",
+        "Do you track and analyze business performance regularly?",
+        "Are funds or resources allocated for growth and expansion?",
+        "Have you introduced a new product, service, or process in the last 12 months?",
+        "Are you staying updated with market or technology trends in your industry?",
+        "Do you adapt quickly to changes in customer needs or market shifts?",
+        "Do you encourage team members to suggest improvements or innovations?",
+        "Are there systems in place to test and implement new ideas quickly?",
+        "Do you have the right people in key roles to grow your business?",
+        "Are your employees motivated and engaged in their roles?",
+        "Is there a leadership team or succession plan to support business continuity?",
+        "Do you invest in training or upskilling your staff?",
+        "Are roles and responsibilities clearly defined and communicated?"
+      ]
+    };
 
-      const summary = document.createElement("div");
-      summary.className = "summary";
-      summary.textContent = suggestionsData[category].summary;
-      section.appendChild(summary);
+    const fullQuestionSet = categories[selectedCategory];
+    let questionSet = [...fullQuestionSet];
+    let currentIndex = 0;
 
-      const list = document.createElement("ul");
-      suggestionsData[category].suggestions.forEach(suggestion => {
-        const item = document.createElement("li");
-        item.textContent = suggestion;
-        list.appendChild(item);
-      });
-      section.appendChild(list);
+    document.getElementById("categoryTitle").innerText = selectedCategory;
 
-      container.appendChild(section);
+    function filterBySubcategory(sub) {
+      const map = {
+        "Revenue & Sales": fullQuestionSet.slice(0, 7),
+        "Profitability & Margins": fullQuestionSet.slice(7, 14),
+        "Cash Flow & Liquidity": fullQuestionSet.slice(14, 22),
+        "Expense Management": fullQuestionSet.slice(22, 30),
+        "Process": fullQuestionSet.slice(0, 5),
+        "Supply Chain": fullQuestionSet.slice(5, 10),
+        "Cost": fullQuestionSet.slice(10, 13),
+        "Customer Satisfaction & Retention": fullQuestionSet.slice(0, 5),
+        "Competitive Advantage": fullQuestionSet.slice(5, 10),
+        "Brand & Market Share": fullQuestionSet.slice(10, 15),
+        "Regulatory Compliance": fullQuestionSet.slice(0, 5),
+        "Fraud Prevention & Internal Controls": fullQuestionSet.slice(5, 10),
+        "Legal & Contractual Risks": fullQuestionSet.slice(10, 15),
+        "Scalability & Future Plans": fullQuestionSet.slice(0, 5),
+        "Innovation & Adaptability": fullQuestionSet.slice(5, 10),
+        "Employee & Leadership Strength": fullQuestionSet.slice(10, 15),
+      };
+      questionSet = map[sub] || fullQuestionSet;
+      currentIndex = 0;
+      showQuestion();
     }
 
-    function downloadSummary() {
-      let content = "BizVitals 360 – Suggestions & Summary\n\n";
-      for (const cat in suggestionsData) {
-        content += `\n${cat}\nSummary: ${suggestionsData[cat].summary}\nSuggestions:`;
-        suggestionsData[cat].suggestions.forEach(s => {
-          content += `\n- ${s}`;
-        });
-        content += "\n";
+    function showQuestion() {
+      if (!questionSet[currentIndex]) {
+        window.location.href = "result.html";
+        return;
       }
-      const blob = new Blob([content], { type: 'text/plain' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'bizvitals_suggestions_summary.txt';
-      link.click();
-    }
-
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      let y = 10;
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text("BizVitals 360 – Suggestions & Summary", 10, y);
-      y += 10;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
-
-      for (const cat in suggestionsData) {
-        if (y > 270) {
-          doc.addPage();
-          y = 10;
-        }
-
-        doc.setFont("helvetica", "bold");
-        doc.text(cat, 10, y);
-        y += 7;
-
-        doc.setFont("helvetica", "normal");
-        const summaryLines = doc.splitTextToSize(`Summary: ${suggestionsData[cat].summary}`, 180);
-        doc.text(summaryLines, 10, y);
-        y += summaryLines.length * 7;
-
-        suggestionsData[cat].suggestions.forEach(s => {
-          const lines = doc.splitTextToSize(`• ${s}`, 180);
-          doc.text(lines, 10, y);
-          y += lines.length * 7;
-        });
-
-        y += 5;
+      document.getElementById("questionText").innerText = `Q${currentIndex + 1}. ${questionSet[currentIndex]}`;
+      document.getElementById("optionsForm").reset();
+      const saved = JSON.parse(localStorage.getItem("assessmentAnswers") || "{}")[selectedCategory] || [];
+      if (saved[currentIndex]) {
+        document.querySelector(`input[value='${saved[currentIndex]}']`).checked = true;
       }
-
-      doc.save("bizvitals_suggestions_summary.pdf");
     }
+
+    function nextQuestion() {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (!selected) return alert("Please select an option.");
+
+      const answer = selected.value;
+      const allAnswers = JSON.parse(localStorage.getItem("assessmentAnswers") || "{}");
+      if (!allAnswers[selectedCategory]) allAnswers[selectedCategory] = [];
+      allAnswers[selectedCategory][currentIndex] = answer;
+      localStorage.setItem("assessmentAnswers", JSON.stringify(allAnswers));
+
+      currentIndex++;
+      showQuestion();
+    }
+
+    function goBack() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+      }
+    }
+
+    function saveAndExit() {
+      alert("Your answers have been saved.");
+      window.location.href = "index.html";
+    }
+
+    showQuestion();
   </script>
 </body>
 </html>
