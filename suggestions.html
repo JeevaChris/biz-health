@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <title>BizVitals 360 – Suggestions</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
-    font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
       padding: 0;
       background: url('60e10a2c705560103ee87db2d2ac264a.jpg') no-repeat center center fixed;
@@ -18,7 +19,7 @@
       padding: 30px;
       border-radius: 15px;
       max-width: 800px;
-      margin: auto;
+      margin: 50px auto;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 { color: #004f99; }
@@ -35,7 +36,7 @@
     }
     ul { text-align: left; }
     button {
-      margin-top: 30px;
+      margin: 10px 10px 0 0;
       padding: 10px 20px;
       font-size: 16px;
       border-radius: 8px;
@@ -51,7 +52,8 @@
   <div class="question-box">
     <h2>Suggestions & Summary</h2>
     <div id="suggestionsContainer"></div>
-    <button onclick="downloadSummary()">Download Summary</button>
+    <button onclick="downloadSummary()">Download Summary (.txt)</button>
+    <button onclick="downloadPDF()">Download PDF</button>
   </div>
 
   <script>
@@ -138,6 +140,46 @@
       link.href = URL.createObjectURL(blob);
       link.download = 'bizvitals_suggestions_summary.txt';
       link.click();
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let y = 10;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("BizVitals 360 – Suggestions & Summary", 10, y);
+      y += 10;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+
+      for (const cat in suggestionsData) {
+        if (y > 270) {
+          doc.addPage();
+          y = 10;
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.text(cat, 10, y);
+        y += 7;
+
+        doc.setFont("helvetica", "normal");
+        const summaryLines = doc.splitTextToSize(`Summary: ${suggestionsData[cat].summary}`, 180);
+        doc.text(summaryLines, 10, y);
+        y += summaryLines.length * 7;
+
+        suggestionsData[cat].suggestions.forEach(s => {
+          const lines = doc.splitTextToSize(`• ${s}`, 180);
+          doc.text(lines, 10, y);
+          y += lines.length * 7;
+        });
+
+        y += 5;
+      }
+
+      doc.save("bizvitals_suggestions_summary.pdf");
     }
   </script>
 </body>
